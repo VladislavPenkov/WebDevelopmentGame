@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<!-- Vladislav Penkov's 2D Breakout game -->
+<!-- Everywhere MDN's code was modified, I have put "UPDATE:" as a comment -->
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <title>2D Breakout Game</title>
+</head>
+
+<body>
+
+  <ul id="menu">
+    <li>
+      <a href="Help.html"> Help </a>
+    </li>
+    <li>
+      <a href="About.html"> About </a>
+    </li>
+    <li>
+      <a href="index.html"> Game </a>
+    </li>
+  </ul>
+
+<!--This button activates the hardmode function from the js below. -->
+  <p id="hardmode">HARD MODE (Click at own risk!):</p>
+  <button id="hardbutton" onclick="hardMode()">Activate!</button>
+
+<!--This button activates the easymode function from the js below -->
+  <p id="easymode">Easy mode (Click if you can't be bothered):</p>
+  <button id="easybutton" onclick="easyMode()">Activate!</button>
+
+<!--This was a placeholder. Unfortunately, I failed to
+get the database working properly -->
+  <p id="ballspeed">Select ball speed:</p>
+  <form id="choosespeed" action="ballspeedOptions()" method="post">
+    <input type="radio" name="BallSpeed" value="1" checked>1
+    <input type="radio" name="BallSpeed" value="2">2
+    <input type="radio" name="BallSpeed" value="3">3
+    <input type="text" name="FirstName" value="fname">First Name
+    <input type="text" name="LastName" value="lname">Last Name
+    <input type="submit" value="Submit">
+  </form>
+
+
+  <canvas id="myCanvas" width="960" height="640"></canvas>
+  <p1>Click on the canvas if you want sound</p1>
+  <script>
+    ////////////////////////////////////////////////////////////////
+    /* FUNCTION to send score to the database. This function is meant to upload
+    the user high score to the database. Unfortunately, I can't send the data.
+    */
+    function sendScore() {
+
+      //Create new XMLHttpRequest
+      const hscore = new XMLHttpRequest();
+      console.log(hscore);
+
+      //Open the connection and record the score
+      const conn = "get_db_handle_path.php";
+      const vars = "High Score: " + score;
+
+      //Send the score to the DB
+      hscore.open("POST", conn, true);
+      hscore.send(vars);
+    }
+
+
+
+    ///////////////////////////////////////////////////////////////
+    //                    VARIABLES:
+
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var x = canvas.width / 2;
+    var y = canvas.height - 30;
+    //ball speed
+    var dx = 5;
+    var dy = -5;
+    //for drawing the ball
+    var ballRadius = 10;
+    var ballColour = "blue";
+    //for drawing the paddle
+    var paddleHeight = 10;
+    var paddleWidth = 75;
+    var paddleX = (canvas.width - paddleWidth) / 2;
+    //movement keys
+    var rightPressed = false;
+    var leftPressed = false;
+    //bricks generation
+    var brickRowCount = 3;
+    var brickColumnCount = 11;
+    var brickWidth = 75;
+    var brickHeight = 20;
+    var brickPadding = 10;
+    var brickOffsetTop = 30;
+    var brickOffsetLeft = 30;
+    var bricksColour = 'rgb(0,149,221)';
+
+    //Storing the bricks into a 2D array
+    var bricks = [];
+    for (var c = 0; c < brickColumnCount; c++) {
+      bricks[c] = [];
+      for (var r = 0; r < brickRowCount; r++) {
+        bricks[c][r] = {
+          x: 0,
+          y: 0,
+          status: 1
+        };
+      }
+    }
+    //Score variable
+    var score = 0;
+    //lives variable
+    var lives = 3;
+    // sounds variables
+    var hit = new Audio();
+    hit.src = "sounds/hit.mp3";
+    var death = new Audio();
+    death.src = "sounds/death.mp3";
+    var win = new Audio();
+    win.src = "sounds/win.mp3"
+    var easym = new Audio();
+    easym.src = "sounds/easymode.mp3";
+    var hardm = new Audio();
+    hardm.src = "sounds/hardmode.mp3";
+    var bg = new Audio();
+    bg.src = "sounds/background.mp3";
+    var rickr = new Audio();
+    rickr.src = "sounds/rickroll.mp3";
+    ////////////////////////////////////////////////////////////////////////////////
+
+    //                            FUNCTIONS:
+
+
+    function drawScore() {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#0095DD";
+      ctx.fillText("Score: " + score, 8, 20);
+    }
+
+    function drawLives() {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#0095DD";
+      ctx.fillText("Lives: " + lives, canvas.width - 65, 20);
+    }
+
+    function drawBricks() {
+      for (var c = 0; c < brickColumnCount; c++) {
+        for (var r = 0; r < brickRowCount; r++) {
+          if (bricks[c][r].status == 1) {
+            var brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
+            var brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
+            bricks[c][r].x = brickX;
+            bricks[c][r].y = brickY;
+            ctx.beginPath();
+            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+            ctx.fillStyle = bricksColour;
+            ctx.fill();
+            ctx.closePath();
+          }
+        }
+      }
+    }
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      ctx.fillStyle = ballColour;
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawPaddle() {
+      ctx.beginPath();
+      ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+      ctx.fillStyle = "#0095DD";
+      ctx.fill();
+      ctx.closePath();
+    }
+//UPDATE: Changes the ball speed drastically and sets remaining lives to 1.
+    function hardMode() {
+      paddleWidth = 75;
+      dx = dx + 5;
+      dy = dy - 12;
+      if (lives != 1){
+        if (lives = 3){
+          lives = 1;
+        } else { lives --}
+      }
+      hardm.play();
+    }
+//UPDATE: Makes Paddle 4x larger
+    function easyMode() {
+
+      paddleWidth = 300;
+      drawPaddle();
+      easym.play();
+    }
+
+    function collisionDetection() {
+      for (var c = 0; c < brickColumnCount; c++) {
+        for (var r = 0; r < brickRowCount; r++) {
+          var b = bricks[c][r];
+          if (b.status == 1) {
+            if (x + 10 > b.x && x + 10 < b.x + brickWidth && y -10 > b.y && y - 10 < b.y + brickHeight) {
+              dy = -dy;
+              //UPDATE: Hit sound
+              hit.play();
+              b.status = 0;
+              score++;
+              if (score == brickRowCount * brickColumnCount) {
+                //UPDATE: Win sound and Send the score to DB
+                win.play();
+                alert("YOU WIN, CONGRATULATIONS! \n Score:" + score);
+                sendScore();
+                document.location.reload();
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    function mouseMoveHandler(e) {
+      var relativeX = e.clientX - canvas.offsetLeft;
+      if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
+      }
+    }
+
+
+    //UPDATE: function for mobile movement integration
+    function touchMoveHandler(f) {
+      var relativeX = f.clientX - canvas.offsetLeft;
+      if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
+      }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    //                        KEY HANDLERS
+
+    //Listener for key presses анд моусе
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+    document.addEventListener("mousemove", mouseMoveHandler, false);
+    //UPDATE: For mobile devices
+    document.addEventListener("touchmove", touchMoveHandler, false);
+
+    //UPDATE: Disabled default browser actions for keys so that it doesn't move
+    var arrow_keys_handler = function(e) {
+        switch(e.keyCode){
+            case 37: case 39: case 38:  case 40: // Arrow keys
+            case 32: e.preventDefault(); break; // Space
+            default: break; // do not block other keys
+        }
+    };
+    window.addEventListener("keydown", arrow_keys_handler, false);
+
+
+    function keyDownHandler(e) {
+      if (e.key == "Right" || e.key == "ArrowRight") {
+        rightPressed = true;
+      } else if (e.key == "Left" || e.key == "ArrowLeft") {
+        leftPressed = true;
+      }
+    }
+    // "Right" and "left" are for IE/Edge
+    function keyUpHandler(e) {
+      if (e.key == "Right" || e.key == "ArrowRight") {
+        rightPressed = false;
+      } else if (e.key == "Left" || e.key == "ArrowLeft") {
+        leftPressed = false;
+      }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBall();
+      drawPaddle();
+      drawBricks();
+      collisionDetection();
+      drawScore();
+      drawLives();
+      //Collision detection
+      if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+        dx = -dx;
+      }
+      if (y + dy < ballRadius) {
+        dy = -dy;
+      } else if (y + dy > canvas.height - ballRadius) {
+        if (x > paddleX && x < paddleX + paddleWidth) {
+          dy = -dy;
+        } else {
+          lives--;
+          if (!lives) {
+            //UPDATE Death sound
+            hardm.pause();
+            easym.pause();
+            rickr.play();
+            alert("GAME OVER! \n Score: " + score + "\n ..And yes, you are getting Rick Rolled in 2020 \n");
+            //UPDATE Send the score to DB
+            sendScore();
+            document.location.reload();
+          } else {
+            x = canvas.width / 2;
+            y = canvas.height - 30;
+            dx = 6;
+            dy = -6;
+            setTimeout(drawBall, 500);
+            paddleX = (canvas.width - paddleWidth) / 2;
+          }
+        }
+      }
+
+      if (rightPressed && paddleX < canvas.width - paddleWidth) {
+        paddleX += 7;
+      } else if (leftPressed && paddleX > 0) {
+        paddleX -= 7;
+      }
+
+      //UPDATE: Change ball colours for each death
+      if (lives == 2) {
+        ballColour = "red";
+      }
+
+      if (lives == 1) {
+        ballColour = "black"
+      }
+
+
+      x += dx;
+      y += dy;
+
+      requestAnimationFrame(draw);
+    }
+    ////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////
+    draw();
+    //////////////////////
+  </script>
+
+</body>
+
+</html>

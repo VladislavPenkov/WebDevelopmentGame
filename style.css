@@ -1,0 +1,114 @@
+canvas {
+  background-color: lightgray ;
+  display: block;
+}
+
+body{
+  background: url(images/background.jpg);
+}
+
+p {
+  color: 	blue ;
+  background-color: lightgray;
+  font-size: 26px;
+}
+
+p1 {
+  text-align: center;
+  font-size: 18px;
+  color: white;
+  position: absolute;
+  left: 400px;
+}
+
+button{
+color: green;
+border-color: red;
+background-color: black;
+}
+
+h1{
+  text-align: center;
+}
+
+#about{
+  color: black;
+  font-size: 18px;
+  text-align: center;
+}
+
+#menu {
+  list-style-type: none;
+  margin: 10%;
+  padding: 1%;
+  width: 90%;
+  overflow: hidden;
+  position: absolute;
+  left: 900px;
+  bottom: 500px;
+
+}
+#menu li {
+  float: left;
+  background-color: whitesmoke;
+  text-decoration: none;
+    width: 10%;
+}
+
+#menu li a {
+  display: block;
+  color: black;
+  text-align: center;
+  padding: 1% 5% 2%;
+    text-decoration: none
+
+}
+#menu li a:hover {
+  background-color: gray;
+}
+
+#hardmode{
+  text-align: right;
+  position: absolute;
+  left: 1000px;
+  bottom: 600px;
+}
+
+#easymode{
+  text-align: right;
+  position: absolute;
+  left: 1000px;
+  bottom: 500px;
+}
+
+#ballspeed{
+  text-align: right;
+  position: absolute;
+  left: 1000px;
+  bottom: 400px;
+}
+
+#hardbutton{
+  text-align: right;
+  position: absolute;
+  left: 1000px;
+  bottom: 590px;
+}
+
+#easybutton{
+  text-align: right;
+  position: absolute;
+  left: 1000px;
+  bottom: 490px;
+}
+
+#choosespeed{
+  text-align: right;
+  position: absolute;
+  left: 1000px;
+  bottom: 390px;
+}
+
+* {
+  box-sizing: border-box
+}
